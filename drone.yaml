@@ -1,0 +1,33 @@
+kind: pipeline
+type: docker
+name: serenity-tests
+
+steps:
+  - name: run-tests
+    image: maven:3.9.6-eclipse-temurin-11
+    environment:
+      SELENIUM_REMOTE_URL: http://selenium-hub:4444/wd/hub
+      environment: remote
+    commands:
+      - mvn clean verify -Denvironment=remote
+
+  - name: selenium-hub
+    image: selenium/hub:4.16.1
+    detach: true
+
+  - name: chrome-node
+    image: selenium/node-chrome:4.16.1
+    environment:
+      - SE_EVENT_BUS_HOST=selenium-hub
+      - SE_EVENT_BUS_PUBLISH_PORT=4442
+      - SE_EVENT_BUS_SUBSCRIBE_PORT=4443
+    detach: true
+
+volumes:
+  - name: maven-cache
+    path: /root/.m2
+
+trigger:
+  event:
+    - push
+    - pull_request
